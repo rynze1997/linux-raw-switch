@@ -4,6 +4,9 @@
 # Build directory
 build/
 
+# VSCode
+.vscode/
+
 # Object files
 *.o
 *.ko
