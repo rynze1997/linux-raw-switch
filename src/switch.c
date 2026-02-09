@@ -148,9 +148,27 @@ int main() {
     pthread_t switch_thread_id;
     pthread_create(&switch_thread_id, NULL, switch_thread, NULL);
 
-    pthread_join(switch_thread_id, NULL);
+    char cmd_buffer[256];
 
-    printf("Switch thread joined\n");
+    while (1) {
+        printf("Switch> ");
+        if (fgets(cmd_buffer, sizeof(cmd_buffer), stdin) == NULL) {
+            break;
+        }
+
+        // Remove trailing newline
+        cmd_buffer[strcspn(cmd_buffer, "\n")] = '\0';
+
+        if (strcmp(cmd_buffer, "exit") == 0) {
+            break;
+        }
+
+        printf("You entered: %s\n", cmd_buffer);
+    }
+
+    printf("Exiting...\n");
+
+    pthread_join(switch_thread_id, NULL);
 
     return 0;
 }
