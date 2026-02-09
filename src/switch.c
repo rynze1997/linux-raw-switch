@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <poll.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
 #include "net/socket.h"
 #include "switch/mac_table.h"
@@ -48,10 +49,8 @@ static void print_mac(unsigned char *mac) {
            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
-int main() {
+static void *switch_thread() {
     struct pollfd fds[MAX_PORTS];
-
-    printf("Starting Simple Switch on 4 ports...\n");
 
     // Initialize sockets for all ports
     for (int port = 0; port < MAX_PORTS; port++) {
@@ -68,7 +67,7 @@ int main() {
      * 3. We process Port 2's packet immediately after.
      */
 
-    while (1) {
+     while (1) {
         // poll() blocks until data arrives on ANY of the ports
         int ret = poll(fds, MAX_PORTS, -1);
         if (ret < 0) {
@@ -134,9 +133,24 @@ int main() {
         }
     }
 
-    // Cleanup
-    for (int port_index = 0; port_index < MAX_PORTS; port_index++) {
-        close(switch_inst.socket_fds[port_index]);
+    // Clean up
+    for (int port = 0; port < MAX_PORTS; port++) {
+        close(switch_inst.socket_fds[port]);
     }
+
+    return NULL;
+}
+
+int main() {
+
+    printf("Starting Simple Switch on 4 ports...\n");
+
+    pthread_t switch_thread_id;
+    pthread_create(&switch_thread_id, NULL, switch_thread, NULL);
+
+    pthread_join(switch_thread_id, NULL);
+
+    printf("Switch thread joined\n");
+
     return 0;
 }
