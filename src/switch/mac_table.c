@@ -48,7 +48,7 @@ static void print_mac(unsigned char *mac) {
 /*------------------------------------------------------------------------------
  * Public Functions Definitions
  *----------------------------------------------------------------------------*/
-void mac_table_update(unsigned char *src_mac, int port) {
+void mac_table_update(unsigned char *src_mac, uint8_t port) {
 
     // Check if we already know this MAC
     for (int i = 0; i < mac_table.count; i++) {
@@ -93,4 +93,15 @@ int mac_table_lookup_port(unsigned char *dst_mac) {
     }
 
     return -1; // Not found -> Flood
+}
+
+void mac_table_flush_port(uint8_t port) {
+    for (int i = 0; i < mac_table.count; i++) {
+        if (mac_table.entries[i].port_index == port) {
+            // Swap with last entry and shrink table
+            mac_table.entries[i] = mac_table.entries[mac_table.count - 1];
+            mac_table.count--;
+            i--; // Re-check this index since we swapped in a new entry
+        }
+    }
 }
