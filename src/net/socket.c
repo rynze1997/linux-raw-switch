@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <linux/if_packet.h>
 #include <net/ethernet.h>
+#include <unistd.h>
 
 #include "socket.h"
 
@@ -20,7 +21,7 @@ int create_socket(const char *iface_name) {
     // 1. Create a RAW socket that listens to ALL protocols (ETH_P_ALL)
     if ((sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
         perror("Socket creation failed");
-        exit(1);
+        return -1;
     }
 
     // 2. Get the Interface Index (required for binding)
@@ -33,7 +34,8 @@ int create_socket(const char *iface_name) {
      */
     if (ioctl(sock_fd, SIOCGIFINDEX, &ifr) < 0) {
         perror("Getting interface index failed");
-        exit(1);
+        close(sock_fd);
+        return -1;
     }
     int if_index = ifr.ifr_ifindex;
 
@@ -45,7 +47,8 @@ int create_socket(const char *iface_name) {
 
     if (bind(sock_fd, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
         perror("Bind failed");
-        exit(1);
+        close(sock_fd);
+        return -1;
     }
 
     // 4. Set Promiscuous Mode (so we hear everything)
@@ -55,8 +58,14 @@ int create_socket(const char *iface_name) {
 
     if (setsockopt(sock_fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(mr)) < 0) {
         perror("Promiscuous mode failed");
-        exit(1);
+        close(sock_fd);
+        return -1;
     }
 
     return sock_fd;
+}
+
+void socket_close(int sock_fd) {
+    close(sock_fd);
+    printf("Socket closed\n");
 }

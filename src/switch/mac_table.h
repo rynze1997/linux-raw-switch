@@ -18,7 +18,7 @@
  * @param src_mac The source MAC address
  * @param port The port number
  */
-void mac_table_update(unsigned char *src_mac, int port);
+void mac_table_update(unsigned char *src_mac, uint8_t port);
 
 /**
  * @brief Lookup the port number for a given MAC address.
@@ -27,5 +27,12 @@ void mac_table_update(unsigned char *src_mac, int port);
  * @return The port number, or -1 if not found
  */
 int mac_table_lookup_port(unsigned char *dst_mac);
+
+/**
+ * @brief Flush the MAC table for a given port.
+ *
+ * @param port The port number
+ */
+void mac_table_flush_port(uint8_t port);
 
 #endif // MAC_TABLE_H
