@@ -67,5 +67,4 @@ int create_socket(const char *iface_name) {
 
 void socket_close(int sock_fd) {
     close(sock_fd);
-    printf("Socket closed\n");
 }
