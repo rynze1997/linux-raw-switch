@@ -1,6 +1,6 @@
 # Virtual Architecture: Network Namespaces & Veth Pairs
 
-This document explains the Linux networking concepts used to simulate a physical network environment for testing a custom C-based Ethernet Hub.
+This document explains the Linux networking concepts used to simulate a physical network environment for testing a custom C-based Ethernet Switch.
 
 ## 1. Core Concepts
 
@@ -21,7 +21,7 @@ A physical patch cable has two ends. If you plug one end into a switch and the o
 
 * **Behavior:** Anything injected into `End-A` immediately pops out of `End-B`, and vice versa.
 * **The Setup:**
-    * **End A (`veth1`):** Stays in the main OS (Host). Your C program attaches to this. It acts as the **Hub Port**.
+    * **End A (`veth1`):** Stays in the main OS (Host). Your C program attaches to this. It acts as the **Switch Port**.
     * **End B (`veth1-pc`):** Is moved inside the `pc1` namespace. It acts as the **PC's Network Card (NIC)**.
 
 ## 2. The Setup Script Explained
@@ -86,7 +86,7 @@ When `pc1` pings `pc2`, this is the physical path the data takes:
 
 1. **Inside `pc1`:** The ping command generates an ICMP packet. It sends it out `veth1-pc`.
 2. **The Tunnel:** The Linux kernel instantly transports that packet to the other end of the pair: `veth1`.
-3. **The Host (Switch):** The packet arrives at `veth1`. The C program (Hub) reads it using `recvfrom`.
-4. **The Flooding:** The C program writes that packet to `veth2`.
+3. **The Host (Switch):** The packet arrives at `veth1`. The C program (Switch) reads it using `recvfrom`.
+4. **The Forwarding:** The switch looks up the destination MAC in its MAC table. If found, the frame is sent only to the correct port. If unknown, the frame is flooded to all other active ports. In this example the packet is forwarded to `veth2`.
 5. **The Tunnel:** The packet travels from `veth2` to `veth2-pc`.
 6. **Inside `pc2`:** The packet pops out of the network card `veth2-pc`, where the OS receives it.

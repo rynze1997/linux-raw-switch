@@ -37,7 +37,7 @@ This is how 99% of network programming works (Web servers, Chat apps, Games).
 
 ---
 
-## 3. Scenario B: The Project Hub (Infrastructure Layer)
+## 3. Scenario B: The Project Switch (Infrastructure Layer)
 
 This is how network appliances (Routers, Switches, Firewalls) work. We are not a participant in the conversation; we are the delivery system.
 
@@ -64,10 +64,10 @@ This is how network appliances (Routers, Switches, Firewalls) work. We are not a
 
 ## 4. Comparison Summary
 
-| Feature | Google Chrome (Standard) | Project Hub (Raw) |
+| Feature | Google Chrome (Standard) | Project Switch (Raw) |
 | :--- | :--- | :--- |
 | **Socket Type** | `AF_INET` (Internet) | `AF_PACKET` (Packet) |
-| **Identifier** | IP Address & Port Number | Network Interface (`veth1`) |
+| **Identifier** | IP Address & Port Number | Network Interface (e.g., `veth1`) |
 | **Kernel's Role** | **Filter:** Only delivers data meant exactly for this app. | **Tap:** Delivers a copy of everything on the wire. |
 | **Data Received** | Clean Data Payload (HTML/Text) | Raw Ethernet Frame (MACs + IP + Data) |
 | **If IP is wrong?** | Application **never sees it**. | Application **receives it** (to forward it). |
