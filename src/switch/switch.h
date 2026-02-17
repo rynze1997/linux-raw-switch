@@ -27,4 +27,12 @@ void switch_stop(void);
  */
 int switch_connect_port(int port, const char *iface_name);
 
+/**
+ * @brief Request the switch engine to disconnect a port.
+ *
+ * @param port Port number (1-based, 1 to MAX_PORTS)
+ * @return 0 on success, -1 on invalid port
+ */
+int switch_disconnect_port(int port);
+
 #endif // SWITCH_H

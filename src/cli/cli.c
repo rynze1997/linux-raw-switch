@@ -50,6 +50,15 @@ static void cmd_help(int argc, char **argv);
 static void cmd_connect(int argc, char **argv);
 
 /**
+ * @brief Handle the disconnect command.
+ *        Disconnect a switch port from a network interface.
+ *
+ * @param argc The number of arguments
+ * @param argv The arguments
+ */
+static void cmd_disconnect(int argc, char **argv);
+
+/**
  * @brief Parse the arguments from a command line.
  *
  * @param line The command line to parse
@@ -71,6 +80,7 @@ static cli_command_t *find_command(const char *name);
  *----------------------------------------------------------------------------*/
  static cli_command_t commands[] = {
     {"connect", cmd_connect, "connect <port> <interface> - Bind a switch port to a network interface"},
+    {"disconnect", cmd_disconnect, "disconnect <port> - Disconnect a switch port from a network interface"},
     {"help",    cmd_help,    "help                      - Show available commands"},
     {NULL, NULL, NULL}
 };
@@ -106,6 +116,16 @@ static void cmd_connect(int argc, char **argv) {
     }
 
     printf("Command sent: Connect Port %d to %s\n", port, iface);
+}
+
+static void cmd_disconnect(int argc, char **argv) {
+    if (argc != 2) {
+        printf("Usage: disconnect <port>\n");
+        return;
+    }
+
+    int port = atoi(argv[1]);
+    switch_disconnect_port(port);
 }
 
 /* ---------------- Helper Functions ---------------- */
