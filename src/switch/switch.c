@@ -299,3 +299,13 @@ int switch_disconnect_port(int port) {
 
     return 0;
 }
+
+void switch_show_port_status(void) {
+    for (int i = 0; i < MAX_PORTS; i++) {
+        printf("--------------------------------\n");
+        printf("PORT %d:\n", i + 1);
+        printf("Status: %s\n", switch_inst.port[i].is_active ? "UP" : "DOWN");
+        printf("Connected to: %s\n", switch_inst.port[i].is_active ? switch_inst.port[i].if_name : "Not connected");
+        printf("--------------------------------\n");
+    }
+}

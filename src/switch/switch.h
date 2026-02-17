@@ -35,4 +35,10 @@ int switch_connect_port(int port, const char *iface_name);
  */
 int switch_disconnect_port(int port);
 
+/**
+ * @brief Print the status of the switch ports.
+ *
+ */
+void switch_show_port_status(void);
+
 #endif // SWITCH_H
