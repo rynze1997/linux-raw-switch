@@ -1,6 +1,6 @@
 # Socket Creation: The Bridge to the Kernel
 
-This document details the theory and mechanics behind using Raw Sockets (`AF_PACKET`) in Linux C programming. This is the core mechanism that allows a userspace program to act as an Ethernet Hub (and later, a Switch).
+This document details the theory and mechanics behind using Raw Sockets (`AF_PACKET`) in Linux C programming. This is the core mechanism that allows a userspace program to act as an Ethernet Switch.
 
 ## 1. The Mental Model: The "Magic File"
 
@@ -13,7 +13,7 @@ A **Socket** is simply a way to make the Network Interface Card (NIC) look like 
 
 **The Crucial Difference:**
 * **Web Programming (TCP/UDP):** Usually uses "Stream Sockets". The OS acts as a polite secretary—handling headers, handshakes, and re-ordering packets for you. You only see the final data payload.
-* **Hub/Switch Programming (Raw Sockets):** We cannot be polite. We need the raw, messy digital signal, including the Ethernet Headers (MAC addresses). We use **Raw Sockets** to bypass the OS's networking logic.
+* **Switch Programming (Raw Sockets):** We cannot be polite. We need the raw, messy digital signal, including the Ethernet Headers (MAC addresses). We use **Raw Sockets** to bypass the OS's networking logic.
 
 
 
@@ -77,8 +77,8 @@ This step is specific to Hubs, Switches, and Packet Sniffers (like Wireshark).
 **The Problem:**
 By default, a Network Card (NIC) hardware is programmed to be efficient. If a packet arrives with a Destination MAC of `AA:BB:CC`, but the NIC's actual MAC is `11:22:33`, the hardware drops the packet immediately. The CPU never sees it.
 
-**The Hub/Switch Requirement:**
-A Hub or Switch's job is to forward traffic meant for *other people*. If `PC A` sends a message to `PC B`, the Hub must "hear" it to forward it, even though the Hub isn't the final destination.
+**The Switch Requirement:**
+A Switch's job is to forward traffic meant for *other people*. If `PC A` sends a message to `PC B`, the Switch must "hear" it to forward it, even though the Switch isn't the final destination.
 
 **The Solution:**
 We use `setsockopt` to enable **Promiscuous Mode**.
