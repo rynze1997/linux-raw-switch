@@ -36,6 +36,7 @@ typedef struct switch_port_info_st {
 
     bool request_connect;         // 1 = CLI wants to connect this port
     char pending_name[IFNAMSIZ]; // The name CLI wants to connect to
+    bool request_disconnect;      // 1 = CLI wants to disconnect this port
 } switch_port_info_t;
 
 typedef struct switch_st {
@@ -82,7 +83,7 @@ static void *switch_thread_func();
  *
  * @param fds The pollfd struct to update
  */
-static void process_pending_port_connect_requests(struct pollfd *fds);
+static void process_pending_port_requests(struct pollfd *fds);
 
 /**
  * @brief Process an incoming frame.
@@ -90,6 +91,22 @@ static void process_pending_port_connect_requests(struct pollfd *fds);
  * @param incoming_port_index The index of the incoming port (0-based)
  */
 static void process_incoming_frame(int incoming_port_index);
+
+/**
+ * @brief Disconnect a port.
+ *
+ * @param port The port info struct
+ * @param port_index The index of the port (0-based)
+ */
+static void disconnect_port(switch_port_info_t *port, int port_index);
+
+/**
+ * @brief Connect a port.
+ *
+ * @param port The port info struct
+ * @param port_index The index of the port (0-based)
+ */
+static void connect_port(switch_port_info_t *port, int port_index);
 
 /*------------------------------------------------------------------------------
  * Static Functions
@@ -112,30 +129,37 @@ static void flood_packet(uint8_t incoming_port_index, unsigned char *frame_buffe
     }
 }
 
-static void process_pending_port_connect_requests(struct pollfd *fds) {
+static void disconnect_port(switch_port_info_t *port, int port_index) {
+    socket_close(port->socket_fd);
+    port->socket_fd = -1;
+    port->is_active = false;
+    mac_table_flush_port(port_index);
+    printf("[Switch Engine] Port %d disconnected.\n", port_index + 1);
+}
+
+static void connect_port(switch_port_info_t *port, int port_index) {
+    int new_sock = create_socket(port->pending_name);
+    if (new_sock >= 0) {
+        port->socket_fd = new_sock;
+        strncpy(port->if_name, port->pending_name, IFNAMSIZ);
+        port->is_active = true;
+        printf("[Switch Engine] Port %d connected to %s and is UP.\n", port_index + 1, port->pending_name);
+    }
+}
+
+static void process_pending_port_requests(struct pollfd *fds) {
     for (int i = 0; i < MAX_PORTS; i++) {
         // Check if CLI asked to connect a port
         if (switch_inst.port[i].request_connect) {
             // Close old socket if it was open
             if (switch_inst.port[i].socket_fd != -1) {
-                socket_close(switch_inst.port[i].socket_fd);
-                switch_inst.port[i].socket_fd = -1;
-                switch_inst.port[i].is_active = false;
-                mac_table_flush_port(i);
-                printf("[Switch Engine] Port %d disconnected.\n", i+1);
+                disconnect_port(&switch_inst.port[i], i);
             }
-
-            // Open new socket
-            int new_sock = create_socket(switch_inst.port[i].pending_name);
-
-            if (new_sock >= 0) {
-                switch_inst.port[i].socket_fd = new_sock;
-                strncpy(switch_inst.port[i].if_name, switch_inst.port[i].pending_name, IFNAMSIZ);
-                switch_inst.port[i].is_active = true;
-                printf("[Switch Engine] Port %d connected to %s and is UP.\n", i+1, switch_inst.port[i].pending_name);
-            }
-
+            connect_port(&switch_inst.port[i], i);
             switch_inst.port[i].request_connect = false; // Request handled
+        } else if (switch_inst.port[i].request_disconnect) {
+            disconnect_port(&switch_inst.port[i], i);
+            switch_inst.port[i].request_disconnect = false; // Request handled
         }
 
         // Update poll struct
@@ -199,7 +223,7 @@ static void *switch_thread_func() {
      while (!switch_inst.shutdown) {
 
         pthread_mutex_lock(&lock); // Grab the key
-        process_pending_port_connect_requests(fds);
+        process_pending_port_requests(fds);
         pthread_mutex_unlock(&lock); // Release the key
 
         /* poll() blocks until data arrives on ANY of the ports
@@ -257,6 +281,20 @@ int switch_connect_port(int port, const char *iface_name) {
     pthread_mutex_lock(&lock);
     strncpy(switch_inst.port[port_idx].pending_name, iface_name, IFNAMSIZ);
     switch_inst.port[port_idx].request_connect = true;
+    pthread_mutex_unlock(&lock);
+
+    return 0;
+}
+
+int switch_disconnect_port(int port) {
+    int port_idx = port - 1; // Convert from 1-based to 0-based
+
+    if (port_idx < 0 || port_idx >= MAX_PORTS) {
+        return -1;
+    }
+
+    pthread_mutex_lock(&lock);
+    switch_inst.port[port_idx].request_disconnect = true;
     pthread_mutex_unlock(&lock);
 
     return 0;
